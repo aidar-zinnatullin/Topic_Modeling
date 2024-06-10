@@ -1,6 +1,27 @@
+
+# Install required rackages -----------------------------------------------
+
+install.packages(here)
+install.packages(quanteda)
+install.packages(devtools)
+devtools::install_github("quanteda/quanteda.corpora")
+install.packages(quanteda.corpora)
+install.packages(stringr)
+install.packages(tidyverse)
+install.packages(tidytext)
+install.packages(stm)
+install.packages(geometry)
+install.packages(Rtsne)
+install.packages(rsvd)
+install.packages(SnowballC)
+install.packages(plotrix)
+
+
+# Load the packages -------------------------------------------------------
+
+
 library(here)
 library(quanteda)
-#devtools::install_github("quanteda/quanteda.corpora")
 library(quanteda.corpora)
 library(stringr)
 library(tidyverse)
@@ -12,6 +33,9 @@ library(rsvd)
 library(SnowballC)
 library(plotrix)
 
+
+# Download the Guardian Corpus from Quanteda ------------------------------
+
 corp <- corpus(download('data_corpus_guardian'))
 
 df_guardian <- convert(corp, to = "data.frame")  
@@ -21,7 +45,10 @@ names(df_guardian)
 df_guardian$text <- str_trim(df_guardian$text, side = "both")
 
 
-########### pre-processing
+
+# Start preprocessing -----------------------------------------------------
+
+
 df_guardian$text <- tolower(df_guardian$text)
 df_guardian$text <- gsub("[[:punct:]]", " ", df_guardian$text)
 
@@ -31,8 +58,8 @@ df_guardian$text <- gsub("[0-9]+", "", df_guardian$text)
 df_guardian$text <- gsub("\\s+", " ", df_guardian$text)
 
 
-# Stopwords
-new_stopwords <- read.table("stopwords.txt") # 563 words
+# Remove stopwords
+new_stopwords <- read.table("stopwords.txt") # 736 words
 names(new_stopwords) <- "word"
 
 new_stopwords <- as_tibble(new_stopwords)
@@ -55,44 +82,55 @@ guardian_clean_text <- texts_tokens %>%
   mutate(text = map(data, unlist),
          text = map_chr(text, paste, collapse = " "))
 
-table(df_guardian$doc_id%in% guardian_clean_text$doc_id)
-removed_df <- df_guardian[df_guardian$doc_id%in% guardian_clean_text$doc_id==FALSE,]
+table(df_guardian$doc_id%in% guardian_clean_text$doc_id) # missing four articles
+removed_df <- df_guardian[df_guardian$doc_id%in% guardian_clean_text$doc_id==FALSE,] # text column is empty
 
 
 head(guardian_clean_text)
 str(guardian_clean_text)
 guardian_clean_text$data <- NULL
+
+
+# Start STM part of the analysis ------------------------------------------
+
+
 processed <- textProcessor(guardian_clean_text$text, metadata = guardian_clean_text) 
 
 plotRemoved(processed$documents, lower.thresh = seq(1, 200, by = 100)) 
 
-out <- prepDocuments(processed$documents, processed$vocab,processed$meta, lower.thresh = 1) # decided to deal with threshold 10
+out <- prepDocuments(processed$documents, processed$vocab,processed$meta, lower.thresh = 1) # decided to deal with threshold 1
 docs <- out$documents
 vocab <- out$vocab
 meta <-out$meta
 save(out, docs, vocab, meta, processed, guardian_clean_text, texts_tokens, df_guardian, new_stopwords, 
      file = "stm_outputs/saved_objects.RData")
 
-########### selecting number of topic
 
-names(meta)
 
-out$meta$date <- as.numeric(as.Date(out$meta$date)) # it is necessary to avoid cdata problem
+# selecting number of topic -----------------------------------------------
 
-#  an automated method to select the number of topics (Lee & Mimno, 2014)
-load(here("stm_outputs","saved_objects.RData"))
+# I present two options: (1) the method proposed by Lee & Mimno, 2014;
+# (2) an iterative approach based on the elbow principle from the cluster analysis, estimating the trade-off between semantic coherence and exclusivity
+
+
+
+#  Option 1: an automated method to select the number of topics (Lee & Mimno, 2014)
+#load(here("stm_outputs","saved_objects.RData"))
+
+out$meta$date <- as.numeric(as.Date(out$meta$date)) # It is necessary to avoid the cdata problem when we include  to the model the time variable as a covariate
+
 
 modelPrevFit_0 <- stm(documents = out$documents, vocab = out$vocab,
                           K = 0, prevalence = ~ s(date),
                           max.em.its = 100,
                           data = out$meta,
                           init.type = "Spectral",
-                          seed = 123) # 20:48 - 21:40
+                          seed = 123) # 20:48 - 21:40, so it can take around an hour on CPU
 save(modelPrevFit_0, file = "stm_outputs/PreliminaryModel.RData")
 
+#load(here("stm_outputs", "PreliminaryModel.RData"))
 
-##### Without upper bound for 99 is much better and really makes sense.
-labelTopics(modelPrevFit_0, n = 10) # 80
+labelTopics(modelPrevFit_0, n = 10) # 70
 
 
 options(scipen = 999)
@@ -103,9 +141,9 @@ plot(prep, "date", method = "continuous", topics = 63, model = modelPrevFit_0, p
 save(prep, file = "stm_outputs/prep_mimno_tsur.RData")
 
 
-# Option 2: Semantic coherence - Exclusivity
+# Option 2: Semantic Coherence - Exclusivity trade-off
 storage_10_100 <- searchK(out$documents, out$vocab, K = seq(from = 10, to = 100, by = 5),
-                             prevalence =~ s(date), data = meta) # 22:15 - 
+                             prevalence =~ s(date), data = meta) # it will take a while
 storage_10_100$results
 storage_10_100_k <- storage_10_100$results
 str(storage_10_100_k)
@@ -125,7 +163,7 @@ write.csv(x = storage_10_100_k, file = "stm_outputs/semantic_coherence_1.csv")
 topics_metrics <-storage_10_100_k[,1:3]
 
 
-# Vis Figure 1A. A trade-off between semantic coherence and exclusivity of topic models in the case video text scripts 
+# Visualize the trade-off between semantic coherence and exclusivity, first iteration
 
 jpeg("Figures/Figure1.jpeg", width = 16, height = 8, units = 'in', res = 500)
 plot(x = topics_metrics$semcoh, y = topics_metrics$exclus,type = "p", ylab = "Exclusivity", 
@@ -139,7 +177,7 @@ text(x =-70, y = 9.7, labels = "K-Values for Next Range (K = 15-35)", col = "blu
 dev.off()
 
 
-# I need to add new rounds of K serching ----------------------------------
+# Need to run a new round of K serching ----------------------------------
 
 storage_15_35 <- searchK(out$documents, out$vocab, K = c(15:35),
                                prevalence =~ s(date), data = meta) 
@@ -182,7 +220,7 @@ dev.off()
 # -------------------------------------------------------------------------
 
 storage_20_30 <- searchK(out$documents, out$vocab, K = c(20:30),
-                               prevalence =~ s(date), data = meta) # 17:36 - 20:00
+                               prevalence =~ s(date), data = meta) 
 
 storage_20_30$results
 storage_20_30_k <- storage_20_30$results
