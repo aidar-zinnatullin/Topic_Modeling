@@ -262,7 +262,7 @@ modelPrevFit_27 <- stm(documents = out$documents, vocab = out$vocab,
                        init.type = "Spectral", seed = 12345)
 
 save(modelPrevFit_27, file = "stm_outputs/modelPrevFit_27.RData")
-load(here("stm_outputs", "modelPrevFit_27.RData"))
+#load(here("stm_outputs", "modelPrevFit_27.RData"))
 labelTopics(modelPrevFit_27)
 
 
@@ -300,9 +300,9 @@ date_labels <- format(date_seq, "%Y-%m")
 
 jpeg("Figures/Vis_Dynamic.jpeg", width = 9, height = 6, units = 'in', res = 500)
 plot(reg_model_2, "date", method = "continuous", topics = 27, model = modelPrevFit_27, 
-     printlegend = FALSE, xaxt = "n", xlab = "Time")
-
+     printlegend = FALSE, xaxt = "n", xlab = "")
 axis(1, at = date_seq_numeric, labels = date_labels, las = 2)
+mtext("Time", side = 1, line = 4)
 dev.off()
 
 
