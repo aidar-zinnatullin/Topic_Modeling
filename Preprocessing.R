@@ -41,11 +41,15 @@ preText_results <- preText(
   num_comparisons = 20,
   verbose = FALSE)
 
-
+# the least risky specifications have the lowest preText score and are displayed at the top of the plot
+jpeg("Figures/FigureCheckPreproc.jpeg", width = 16, height = 14, units = 'in', res = 500)
 preText_score_plot(preText_results)
+dev.off()
 
+jpeg("Figures/FigureConditionalPreprocess.jpeg", width = 10, height = 8, units = 'in', res = 500)
 regression_coefficient_plot(preText_results,
                             remove_intercept = TRUE)
+dev.off()
 
 
 
