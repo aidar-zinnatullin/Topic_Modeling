@@ -7,6 +7,7 @@ This repository contains scripts and data for analyzing the Guardian news corpus
 The following R packages are required for running the script:
 
 - here
+- devtools
 - quanteda
 - quanteda.corpora
 - stringr
@@ -19,12 +20,12 @@ The following R packages are required for running the script:
 - SnowballC
 - plotrix
 
-Ensure that you have these packages installed. If any package is missing, you can install it using the `install.packages()` function or `devtools::install_github()` for packages hosted on GitHub.
+Ensure that you have these packages installed. If any package is missing, you can install it using the `install.packages()` function or `devtools::install_github()` for packages hosted on GitHub (for instance, `quanteda.corpora`).
 
 ## Files
 
-- `script.R`: The main R script that performs the analysis.
-- `stopwords.txt`: A text file containing custom stopwords.
+- `STM.R`: The main R script that performs the analysis.
+- `stopwords.txt`: A text file containing custom stopwords (*n*=736).
 - `stm_outputs/saved_objects.RData`: Saved RData objects from the STM preprocessing step.
 - `stm_outputs/PreliminaryModel.RData`: Preliminary STM model.
 - `stm_outputs/prep_mimno_tsur.RData`: Preprocessed data for effect estimation.
