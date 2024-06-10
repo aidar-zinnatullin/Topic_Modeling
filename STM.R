@@ -115,6 +115,11 @@ save(out, docs, vocab, meta, processed, guardian_clean_text, texts_tokens, df_gu
 
 
 #  Option 1: an automated method to select the number of topics (Lee & Mimno, 2014)
+# k = 0 and use the Spectral initialization
+# "We emphasize that this procedure has no particular statistical guarantees and should not
+# be seen as estimating the “true” number of topics. However it can be useful place to start and
+# has the computational advantage that it only needs to be run once." (Roberts, Stewart, and Tingley, 2019, p. 13)
+
 #load(here("stm_outputs","saved_objects.RData"))
 
 out$meta$date <- as.numeric(as.Date(out$meta$date)) # It is necessary to avoid the cdata problem when we include  to the model the time variable as a covariate
