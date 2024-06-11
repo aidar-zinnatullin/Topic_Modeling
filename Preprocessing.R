@@ -15,7 +15,7 @@ library(rsvd)
 library(SnowballC)
 library(plotrix)
 
-devtools::install_github("matthewjdenny/preText")
+#devtools::install_github("matthewjdenny/preText")
 library(preText)
 
 # download the corpus
@@ -86,6 +86,7 @@ modelPrevFit_0_2 <- stm(documents = out$documents, vocab = out$vocab,
                       data = out$meta,
                       init.type = "Spectral",
                       seed = 123) 
+save(modelPrevFit_0_2, file = "stm_outputs/ModelDennySpurling.RData")
 load("stm_outputs/PreliminaryModel.RData")
 
 labelTopics(modelPrevFit_0, n = 10) # 70

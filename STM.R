@@ -1,20 +1,20 @@
 
 # Install required rackages -----------------------------------------------
 
-install.packages(here)
-install.packages(quanteda)
-install.packages(devtools)
-devtools::install_github("quanteda/quanteda.corpora")
-install.packages(quanteda.corpora)
-install.packages(stringr)
-install.packages(tidyverse)
-install.packages(tidytext)
-install.packages(stm)
-install.packages(geometry)
-install.packages(Rtsne)
-install.packages(rsvd)
-install.packages(SnowballC)
-install.packages(plotrix)
+# install.packages(here)
+# install.packages(quanteda)
+# install.packages(devtools)
+# devtools::install_github("quanteda/quanteda.corpora")
+# install.packages(quanteda.corpora)
+# install.packages(stringr)
+# install.packages(tidyverse)
+# install.packages(tidytext)
+# install.packages(stm)
+# install.packages(geometry)
+# install.packages(Rtsne)
+# install.packages(rsvd)
+# install.packages(SnowballC)
+# install.packages(plotrix)
 
 
 # Load the packages -------------------------------------------------------
@@ -48,7 +48,7 @@ df_guardian$text <- str_trim(df_guardian$text, side = "both")
 
 # Start preprocessing -----------------------------------------------------
 
-
+# lines from 51 to 91 are not efficient, this is an artifact of the old R script for non-English languages
 df_guardian$text <- tolower(df_guardian$text)
 df_guardian$text <- gsub("[[:punct:]]", " ", df_guardian$text)
 

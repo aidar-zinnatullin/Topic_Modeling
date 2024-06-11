@@ -21,6 +21,7 @@ The following R packages are required for running the script:
 - `plotrix`
 - `keyATM`
 - `rlang`
+- `preText`
 
 Ensure that you have these packages installed. If any package is missing, you can install it using the `install.packages()` function or `devtools::install_github()` for packages hosted on GitHub (for instance, `quanteda.corpora`).
 
