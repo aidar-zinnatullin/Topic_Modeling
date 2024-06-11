@@ -1,7 +1,7 @@
 # Time index  
-library(lubridate)
 library(here)
 library(tidyverse)
+library(tidytext)
 library(keyATM)
 library(rlang)
 library(quanteda)
@@ -15,10 +15,6 @@ df_guardian <- convert(corp, to = "data.frame")
 
 names(df_guardian)
 df_guardian$text <- str_trim(df_guardian$text, side = "both")
-
-
-
-# Start preprocessing -----------------------------------------------------
 
 
 df_guardian$text <- tolower(df_guardian$text)
@@ -56,11 +52,9 @@ names(guardian_clean_text)
 
 key_corpus <- corpus(guardian_clean_text, text_field = "text")
 
-# You can conduct a variety of preprocessing in this step as shown in the next section
 key_token <- tokens(key_corpus) %>%
   tokens_select(min_nchar = 3)
 
-# Create a document-feature matrix (a dfm object) from a token object
 key_dfm <- dfm(key_token)  %>%
   dfm_trim(min_termfreq = 2, min_docfreq = 2)
 
@@ -68,11 +62,9 @@ ncol(key_dfm)  # the number of unique words
 keyATM_docs <- keyATM_read(texts = key_dfm)
 summary(keyATM_docs)
 
-
-
 keywords <- list(
-  US     = c("trump", "sanders", "clinton"),
-  Russia       = c("russia", "putin"),
+  US     = c("trump", "sanders", "clinton", "democrats", "republicans", "romney", "obama"),
+  Russia       = c("russia", "putin", "crimea", "ukraine"),
   Economy          = c("recession", "tax", "business")
 )
 
@@ -85,10 +77,8 @@ index <- as.integer(gsub("-", "", format(docvars(key_corpus)$date, "%Y-%m")))
 
 char_index <- as.character(index)
 
-# Condition 
 given <- sort(unique(index)) %>% as.character()
 
-# For loop 
 for (i in seq(1:length(unique(index)))){
   
   char_index[char_index == given[i]] = paste(i)
@@ -97,10 +87,8 @@ for (i in seq(1:length(unique(index)))){
   
 }
 
-# Check 
 unique(char_index) %>% as.numeric() %>% sort()
 
-# Arrange and assign 
 docvars(key_corpus, "index") <- char_index %>% as.integer()
 
 docvars(key_corpus) <- docvars(key_corpus) %>%
@@ -115,9 +103,9 @@ out_dynamic <- keyATM(
   model_settings    = list(time_index = vars$index,  num_states = 3),
   options           = list(seed = 250, store_theta = TRUE, thinning =3)
 )
-rlang::inject(qs::qsavem(out_dynamic, file = "dynamicTopicModel10.qs"))
+rlang::inject(qs::qsavem(out_dynamic, file = "dynamicTopicModel.qs"))
 
-qs::qload("dynamicTopicModel10.qs")
+qs::qload("dynamicTopicModel.qs")
 
 top_words(out_dynamic)
 
@@ -138,4 +126,8 @@ vars$date_rounded <- as.Date(vars$date_rounded, origin = "1970-01-01")
 time_index_label <- format(vars$date_rounded, "%Y-%m")
 
 fig_timetrend <- plot_timetrend(out_dynamic, time_index_label = time_index_label, xlab = "Time")
+
+# visualize and save
+jpeg("Figures/KeyATMDynamic.jpeg", width = 14, height = 10, units = 'in', res = 500)
 fig_timetrend
+dev.off()
